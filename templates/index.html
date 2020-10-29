@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+
+{% block head %}
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
+  <title>Rohan's IMDB Visualizer</title>
+{% endblock %}
+
+{% block body %}
+<center id='title'><h1>Rohan's <img src="https://upload.wikimedia.org/wikipedia/commons/6/69/IMDB_Logo_2016.svg" alt="IMDB" width="100" height="100" style="vertical-align:middle"> Visualizer</h1></center>
+
+<div id='dropzone'>
+    <h1>File Upload</h1>
+    <form action="{{ url_for('upload_files') }}" class="dropzone">
+    </form>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/dropzone.min.js"></script>
+</div>
+
+<div class="form">
+  <form action="/submit" method="POST" id="userEntry">
+    <input type="submit" class="button" value="Visualize!">
+  </form>
+</div>
+
+<div class="flashes">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for msg in messages %}
+        <p>{{msg}}</p>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</div>
+
+<div class="graphs">
+<script type="text/javascript">zingchart.THEME = 'dark';</script>
+  {% if tables %}
+
+  <div id="plot1">
+    <!-- plot 1 here -->
+    <script>
+      let chartData = {
+      "type": "bar",
+      "title": {
+        "text": "Rated Films Runtime (mins) Distribution"
+      },
+      "plot": {
+        "aspect": "histogram",
+        "backgroundColor": "#FFBF00",
+        "hover-state": {
+          "border-width": "4px",
+          "border-color": "#000",
+          "backgroundColor": "#e6ac00"
+        }},
+      "plotarea": {
+          "adjust-layout": true,
+      },
+      "series": [{
+        "values": {{ tables[0][0] }}
+        }],
+      "scale-x": {
+          "progression": "lin",
+          "min-value": {{ tables[0][1] | min }},
+          "max-value": {{ tables[0][1] | max }},
+          // "labels" : {{ tables[0][1] }},
+          "step": 10,
+          "label" : {
+            "text" : "Runtime in Minutes"
+          }},
+      "scale-y": {
+        "label" : {
+          "text" : "Amount"
+        }
+      }};
+      zingchart.render({
+          "id": "plot1",
+          "data": chartData,
+          "width": "100%",
+          "height": "400px",
+      });
+    </script>
+  </div>
+
+  <div id="plot2">
+    <!-- plot 2 here -->
+    <script>
+      let chart2Data = {
+      "type": "bar",
+      "title": {
+        "text": "Your Ratings Distribution"
+      },
+      "plot": {
+        "aspect": "histogram",
+        "backgroundColor": "#FFBF00",
+        "hover-state": {
+          "border-width": "4px",
+          "border-color": "#000",
+          "backgroundColor": "#e6ac00"
+        }},
+      "plotarea": {
+          "adjust-layout": true,
+      },
+      "series": [{
+        "values": {{ tables[1][0] }}
+        }],
+      "scale-x": {
+          "progression": "lin",
+          "min-value": {{ tables[1][1] | min }},
+          "max-value": {{ tables[1][1] | max }},
+          "step": 1,
+          "decimals": 1,
+          "label" : {
+            "text" : "Your Rating"
+          }},
+      "scale-y": {
+        "label" : {
+          "text" : "Amount"
+        }
+      }};
+      zingchart.render({
+          "id": "plot2",
+          "data": chart2Data,
+          "width": "100%",
+          "height": "400px",
+      });
+    </script>
+  </div>
+
+  <div id="plot3">
+    <!-- plot 3 here -->
+    <script>
+      let chart3Data = {
+      "type": "bar",
+      "title": {
+        "text": "Year Distribution"
+      },
+      "plot": {
+        "aspect": "histogram",
+        "tooltip": {
+          "text": "%vt from %kt"
+        },
+        "backgroundColor": "#FFBF00",
+        "hover-state": {
+          "border-width": "4px",
+          "border-color": "#000",
+          "backgroundColor": "#e6ac00"
+        }},
+      "plotarea": {
+          "adjust-layout": true,
+      },
+      "series": [{
+        "values": {{ tables[2][0] }}
+        }],
+      "scale-x": {
+          "progression": "lin",
+          "min-value": {{ tables[2][1] | min }},
+          "max-value": {{ tables[2][1] | max }},
+          // "step": 100,
+          "label" : {
+            "text" : "Year"
+          }},
+      "scale-y": {
+        "label" : {
+          "text" : "Amount"
+        }
+      }};
+      zingchart.render({
+          "id": "plot3",
+          "data": chart3Data,
+          "width": "100%",
+          "height": "400px",
+      });
+    </script>
+  </div>
+
+  <div id="plot4">
+    <!-- plot 4 here: Average Rating by Year -->
+    <script>
+      let chart4Data = {
+      "type": "bar",
+      "title": {
+        "text": "Average Rating by Year"
+      },
+      "plot": {
+        // "aspect": "histogram",
+        "tooltip": {
+          "text": "%kt avg: %v"
+    },
+        "rules": [{
+            "rule": '%v > {{ tables[4][1] }}',
+            "backgroundColor": 'green'
+          },
+          {
+            "rule": '%v > {{ tables[4][0] }} && %v < {{ tables[4][1] }}',
+            "backgroundColor": 'lightgreen'
+          },
+          {
+            "rule": '%v < {{ tables[4][0] }}',
+            "backgroundColor": 'red'
+          }
+        ],
+      },
+      "plotarea": {
+          "adjust-layout": true,
+      },
+      "series": [{
+        "values": {{ tables[3] }}
+        }],
+      "scale-x": {
+          "progression": "lin",
+          "min-value": {{ tables[2][1] | min }},
+          "max-value": {{ tables[2][1] | max }},
+          "label" : {
+            "text" : "Year"
+          }},
+      "scale-y": {
+        "label" : {
+          "text" : "Average Rating"
+        }
+      }};
+      zingchart.render({
+          "id": "plot4",
+          "data": chart4Data,
+          "width": "100%",
+          "height": "400px",
+      });
+    </script>
+  </div>
+
+  <div id="plot5">
+    <!-- plot 5 here: Top 5 Over Rates -->
+    <script>
+
+    let overRatesYours = [
+      {% for film in tables[5] %}
+      {{ film[2] }},
+      {% endfor %}
+    ];
+
+    let overRatesSite = [
+      {% for film in tables[5] %}
+      {{ film[3] }},
+      {% endfor %}
+    ];
+
+   let overRatesTitles = [
+      {% for film in tables[5] %}
+      "{{ film[0] }}",
+      {% endfor %}
+    ];
+
+    let overRatesLabels = [
+      {% for film in tables[5] %}
+        {
+          'background-image': "{{film[1]}}",
+          'background-fit': 'xy',
+          'backgroundRepeat': "no-repeat",
+          // url: //imdb movie page,
+          offsetY: "-100vh",
+          "hook": "scale:name=scale-x,index={{loop.index0}}",
+          height: "200vh",
+          width: "118vw"
+        },
+        {
+          'text': '{{ "+%.1f"|format(film[2]-film[3]) }}',
+          offsetY: "-300vh",
+          "hook": "scale:name=scale-x,index={{loop.index0}}",
+        },
+      {% endfor %}
+    ]
+
+      let chart5Data = {
+      "type": "bullet",
+      "title": {
+        "text": "Top 5 Over Rates",
+        "y": "-12px"
+      },
+      "subtitle":{
+        "text": "Your Top 5 rated movies relative to the IMDB site rating of those movies",
+        "y": "-1px"
+      },
+      "tooltip" : {
+        "text": "Your Rating: %v"
+      },
+      "plot":{
+        "backgroundColor": 'green'
+      },
+      "plotarea": {
+          "adjust-layout": true,
+      },
+      "series": [{
+        "values": overRatesYours,
+        "goals": overRatesSite,
+        "goal": {
+          'backgroundColor': "#FFFF00",
+          'tooltip': {
+            'backgroundColor': "#FFFF00",
+            'font-color': "black",
+            "text":"IMDB Rating: %g"},
+          },
+        }],
+      "labels": overRatesLabels,
+      "scale-x": {
+        "labels": overRatesTitles
+      },
+      "scale-y": {
+        "label" : {
+          "text" : "Rating"
+        }
+      }};
+      zingchart.render({
+          "id": "plot5",
+          "data": chart5Data,
+          "width": "100%",
+          "height": "400px",
+      });
+    </script>
+  </div>
+
+  <div id="plot6">
+    <!-- plot 6 here: Top 5 Under Rates -->
+    <script>
+
+    let underRatesYours = [
+      {% for film in tables[6] %}
+      {{ film[2] }},
+      {% endfor %}
+    ];
+
+    let underRatesSite = [
+      {% for film in tables[6] %}
+      {{ film[3] }},
+      {% endfor %}
+    ];
+
+   let underRatesTitles = [
+      {% for film in tables[6] %}
+      "{{ film[0] }}",
+      {% endfor %}
+    ];
+
+    let underRatesLabels = [
+      {% for film in tables[6] %}
+        {
+          'background-image': "{{film[1]}}",
+          'background-fit': 'xy',
+          'backgroundRepeat': "no-repeat",
+          // url: //imdb movie page,
+          offsetY: "-100vh",
+          "hook": "scale:name=scale-x,index={{loop.index0}}",
+          height: "200vh",
+          width: "118vw"
+        },
+        {
+          'text': '{{ "%.1f"|format(film[2]-film[3]) }}',
+          offsetY: "-300vh",
+          "hook": "scale:name=scale-x,index={{loop.index0}}",
+        },
+      {% endfor %}
+    ]
+
+      let chart6Data = {
+      "type": "bullet",
+      "title": {
+        "text": "5 Most Under Rates",
+        "y": "-12px"
+      },
+      "subtitle":{
+        "text": "Your Lowest 5 rated movies relative to the IMDB site rating of those movies",
+        "y": "-1px"
+      },
+      "tooltip" : {
+        "text": "Your Rating: %v"
+      },
+      "plot":{
+        "backgroundColor": 'red'
+      },
+      "plotarea": {
+          "adjust-layout": true,
+      },
+      "series": [{
+        "values": underRatesYours,
+        "goals": underRatesSite,
+        "goal": {
+          'backgroundColor': "#FFFF00",
+          'tooltip': {
+            'backgroundColor': "#FFFF00",
+            'font-color': "black",
+            "text":"IMDB Rating: %g"},
+          },
+        }],
+      "labels": underRatesLabels,
+      "scale-x": {
+        "labels": underRatesTitles
+      },
+      "scale-y": {
+        "label" : {
+          "text" : "Rating"
+        }
+      }};
+      zingchart.render({
+          "id": "plot6",
+          "data": chart6Data,
+          "width": "100%",
+          "height": "400px",
+      });
+    </script>
+  </div>
+
+<!--     {% for table in fulltable %}
+      {{ table|safe }}
+    {% endfor %} -->
+
+  {% endif %}
+</div>
+
+{% endblock %}
