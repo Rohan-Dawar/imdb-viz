@@ -7,7 +7,7 @@ Flask Dashboard Visualizing IMDB Profile Statistics using Zingcharts
 1. [Log Into your IMDB Account](https://www.imdb.com/registration/signin)
 2. Navigate to 'Your Ratings'
 3. Click the 3 dots at the top and click 'Export' to download a .csv file
-4. Run app.py
+4. Run viz-webapp.py
 5. In your browser, navigate to your localhost with port 5000: localhost:5000
 6. Upload your .csv file and clicl 'Visualize' 
 
